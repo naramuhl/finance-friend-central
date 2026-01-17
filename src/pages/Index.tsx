@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, LogOut } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SummaryCard } from '@/components/SummaryCard';
 import { TransactionList } from '@/components/TransactionList';
@@ -8,6 +7,8 @@ import { AddTransactionDialog } from '@/components/AddTransactionDialog';
 import { MonthlyChart } from '@/components/MonthlyChart';
 import { BankAccountCard } from '@/components/BankAccountCard';
 import { useFinance } from '@/hooks/useFinance';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -22,6 +23,7 @@ const Index = () => {
     toggleStatus,
     updateBankBalance,
   } = useFinance();
+  const { user, signOut } = useAuth();
 
   const currentMonth = format(new Date(), "MMMM 'de' yyyy", { locale: ptBR });
 
@@ -40,7 +42,21 @@ const Index = () => {
             </h1>
             <p className="text-sm text-muted-foreground capitalize">{currentMonth}</p>
           </div>
-          <AddTransactionDialog onAdd={addTransaction} />
+          <div className="flex items-center gap-3">
+            <span className="hidden text-sm text-muted-foreground md:inline">
+              {user?.email}
+            </span>
+            <AddTransactionDialog onAdd={addTransaction} />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={signOut}
+              title="Sair"
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </motion.header>
 
