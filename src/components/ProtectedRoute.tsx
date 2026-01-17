@@ -1,17 +1,15 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
- * Componente de Rota Protegida
+ * Protected Route Component
  * 
- * Protege rotas que requerem autenticação.
- * Redireciona para /login se o usuário não estiver autenticado.
+ * Protects routes that require authentication.
+ * Redirects to /login if the user is not authenticated.
  * 
- * USO:
- * <ProtectedRoute>
- *   <SuaPagina />
- * </ProtectedRoute>
+ * Uses secure server-side authentication via Lovable Cloud.
  */
 
 interface ProtectedRouteProps {
@@ -19,32 +17,10 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const [verificando, setVerificando] = useState(true);
-  const [autenticado, setAutenticado] = useState(false);
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    const verificarAuth = () => {
-      const usuarioSalvo = localStorage.getItem('usuario');
-      
-      if (usuarioSalvo) {
-        try {
-          const dados = JSON.parse(usuarioSalvo);
-          setAutenticado(dados.logado === true);
-        } catch {
-          setAutenticado(false);
-        }
-      } else {
-        setAutenticado(false);
-      }
-      
-      setVerificando(false);
-    };
-
-    verificarAuth();
-  }, []);
-
-  // Tela de carregamento enquanto verifica autenticação
-  if (verificando) {
+  // Loading state while checking authentication
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <motion.div
@@ -56,8 +32,8 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Redireciona para login se não autenticado
-  if (!autenticado) {
+  // Redirect to login if not authenticated
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
