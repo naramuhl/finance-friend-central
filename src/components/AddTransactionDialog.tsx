@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Plus, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +19,8 @@ import {
 } from '@/components/ui/select';
 import { TransactionType, TransactionStatus } from '@/types/finance';
 import { cn } from '@/lib/utils';
+import { transactionSchema } from '@/lib/validations';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddTransactionDialogProps {
   onAdd: (transaction: {
@@ -44,7 +45,7 @@ const categories = [
   'Educação',
   'Cartões',
   'Outros',
-];
+] as const;
 
 export const AddTransactionDialog = ({ onAdd }: AddTransactionDialogProps) => {
   const [open, setOpen] = useState(false);
@@ -53,19 +54,42 @@ export const AddTransactionDialog = ({ onAdd }: AddTransactionDialogProps) => {
   const [amount, setAmount] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [category, setCategory] = useState('');
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!description || !amount || !dueDate || !category) return;
+    // Parse and validate with Zod
+    const parsedAmount = parseFloat(amount);
+    const parsedDate = dueDate ? new Date(dueDate + 'T12:00:00') : new Date();
+
+    const result = transactionSchema.safeParse({
+      description: description.trim(),
+      amount: parsedAmount,
+      dueDate: parsedDate,
+      type,
+      status: 'pending' as const,
+      category,
+    });
+
+    if (!result.success) {
+      // Show first validation error
+      const firstError = result.error.errors[0];
+      toast({
+        title: 'Erro de validação',
+        description: firstError.message,
+        variant: 'destructive',
+      });
+      return;
+    }
 
     onAdd({
-      description,
-      amount: parseFloat(amount),
-      dueDate: new Date(dueDate + 'T12:00:00'),
-      type,
-      status: 'pending',
-      category,
+      description: result.data.description,
+      amount: result.data.amount,
+      dueDate: result.data.dueDate,
+      type: result.data.type,
+      status: result.data.status,
+      category: result.data.category,
     });
 
     setDescription('');
@@ -73,6 +97,11 @@ export const AddTransactionDialog = ({ onAdd }: AddTransactionDialogProps) => {
     setDueDate('');
     setCategory('');
     setOpen(false);
+    
+    toast({
+      title: 'Sucesso',
+      description: 'Transação adicionada com sucesso!',
+    });
   };
 
   return (
@@ -125,6 +154,7 @@ export const AddTransactionDialog = ({ onAdd }: AddTransactionDialogProps) => {
                 placeholder="Ex: Aluguel, Salário..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                maxLength={200}
                 required
               />
             </div>
@@ -136,7 +166,8 @@ export const AddTransactionDialog = ({ onAdd }: AddTransactionDialogProps) => {
                   id="amount"
                   type="number"
                   step="0.01"
-                  min="0"
+                  min="0.01"
+                  max="999999999.99"
                   placeholder="0,00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
@@ -150,6 +181,8 @@ export const AddTransactionDialog = ({ onAdd }: AddTransactionDialogProps) => {
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
+                  min="2000-01-01"
+                  max="2030-12-31"
                   required
                 />
               </div>
