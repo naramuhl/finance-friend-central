@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Wallet, Plus, Minus, TrendingUp } from 'lucide-react';
+import { Wallet, Plus, Minus, TrendingUp, Building, PiggyBank, CreditCard, Coins } from 'lucide-react';
 import { BankAccount } from '@/types/finance';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,15 @@ interface BankAccountCardProps {
   projectedBalance: number;
   onUpdateBalance: (amount: number) => void;
 }
+
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  'wallet': Wallet,
+  'building': Building,
+  'piggy-bank': PiggyBank,
+  'credit-card': CreditCard,
+  'trending-up': TrendingUp,
+  'coins': Coins,
+};
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -54,7 +63,10 @@ export const BankAccountCard = ({
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2 opacity-90">
-            <Wallet className="h-5 w-5" />
+            {(() => {
+              const IconComponent = iconMap[account.icon] || Wallet;
+              return <IconComponent className="h-5 w-5" />;
+            })()}
             <span className="text-sm font-medium">{account.name}</span>
           </div>
           <p className="mt-3 font-display text-3xl font-bold md:text-4xl">
