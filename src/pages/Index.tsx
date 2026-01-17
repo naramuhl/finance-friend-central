@@ -18,6 +18,7 @@ const Index = () => {
     payables,
     bankAccount,
     summary,
+    loading,
     addTransaction,
     removeTransaction,
     toggleStatus,
@@ -26,6 +27,17 @@ const Index = () => {
   const { user, signOut } = useAuth();
 
   const currentMonth = format(new Date(), "MMMM 'de' yyyy", { locale: ptBR });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
