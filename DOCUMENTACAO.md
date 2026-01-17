@@ -68,25 +68,22 @@ src/
 
 ## Autenticação
 
-### Credenciais de Teste
+### Autenticação Segura com Lovable Cloud
 
-```
-Email: admin@teste.com
-Senha: 123456
-```
+Este sistema utiliza autenticação segura via Lovable Cloud. As credenciais são validadas no servidor, não no cliente.
 
 ### Fluxo de Autenticação
 
 1. Usuário acessa `/login`
-2. Preenche email e senha
-3. Sistema valida credenciais
-4. Se válido: salva sessão e redireciona para `/`
+2. Pode criar conta ou fazer login
+3. Sistema valida credenciais no servidor
+4. Se válido: cria sessão segura e redireciona para `/`
 5. Se inválido: exibe mensagem de erro
 
 ### Componentes de Autenticação
 
 #### `Login.tsx`
-Página de login com formulário de autenticação.
+Página de login/cadastro com formulário de autenticação.
 
 ```tsx
 import Login from './pages/Login';
@@ -103,13 +100,13 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 </ProtectedRoute>
 ```
 
-#### `useAuth.ts`
-Hook para gerenciar estado de autenticação.
+#### `AuthContext.tsx`
+Context para gerenciar estado de autenticação.
 
 ```tsx
-import { useAuth } from './hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
-const { usuario, autenticado, login, logout } = useAuth();
+const { user, session, loading, signIn, signUp, signOut } = useAuth();
 ```
 
 ---
