@@ -1,11 +1,15 @@
 import { motion } from 'framer-motion';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, LogOut } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, LogOut, Wallet, Briefcase } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SummaryCard } from '@/components/SummaryCard';
 import { TransactionList } from '@/components/TransactionList';
 import { AddTransactionDialog } from '@/components/AddTransactionDialog';
 import { MonthlyChart } from '@/components/MonthlyChart';
 import { BankAccountCard } from '@/components/BankAccountCard';
+import { AccountsList } from '@/components/AccountsList';
+import { IncomeSourcesList } from '@/components/IncomeSourcesList';
+import { AddAccountDialog } from '@/components/AddAccountDialog';
+import { AddIncomeSourceDialog } from '@/components/AddIncomeSourceDialog';
 import { useFinance } from '@/hooks/useFinance';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -16,13 +20,20 @@ const Index = () => {
   const {
     receivables,
     payables,
-    bankAccount,
+    primaryAccount,
+    secondaryAccounts,
+    incomeSources,
     summary,
     loading,
     addTransaction,
     removeTransaction,
     toggleStatus,
     updateBankBalance,
+    addBankAccount,
+    removeBankAccount,
+    addIncomeSource,
+    removeIncomeSource,
+    toggleIncomeSourceActive,
   } = useFinance();
   const { user, signOut } = useAuth();
 
@@ -91,9 +102,27 @@ const Index = () => {
             subtitle={`${summary.pendingPayables > 0 ? `R$ ${summary.pendingPayables.toFixed(2)} pendente` : 'Tudo pago!'}`}
           />
           <BankAccountCard
-            account={bankAccount}
+            account={primaryAccount}
             projectedBalance={summary.projectedBalance}
-            onUpdateBalance={updateBankBalance}
+            onUpdateBalance={(amount) => updateBankBalance(amount)}
+          />
+          <SummaryCard
+            title="Renda Mensal"
+            value={summary.monthlyIncome}
+            icon={Briefcase}
+            variant="income"
+            subtitle={`${incomeSources.filter(s => s.isActive).length} fonte(s) ativa(s)`}
+          />
+        </div>
+
+        {/* Secondary Cards Row */}
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <SummaryCard
+            title="Saldo Total (Todas Contas)"
+            value={summary.totalBalance}
+            icon={Wallet}
+            variant="balance"
+            subtitle={`${secondaryAccounts.length + 1} conta(s) cadastrada(s)`}
           />
           <SummaryCard
             title="Balanço do Mês"
@@ -157,6 +186,54 @@ const Index = () => {
               </Tabs>
             </motion.div>
           </div>
+        </div>
+
+        {/* Accounts and Income Sources Section */}
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          {/* Bank Accounts */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="rounded-2xl border bg-card p-6 shadow-card"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-bank">
+                  <Wallet className="h-5 w-5 text-white" />
+                </div>
+                <h2 className="font-display text-xl font-semibold">Contas Bancárias</h2>
+              </div>
+              <AddAccountDialog onAdd={addBankAccount} />
+            </div>
+            <AccountsList 
+              accounts={secondaryAccounts} 
+              onRemove={removeBankAccount}
+            />
+          </motion.div>
+
+          {/* Income Sources */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="rounded-2xl border bg-card p-6 shadow-card"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-income">
+                  <Briefcase className="h-5 w-5 text-white" />
+                </div>
+                <h2 className="font-display text-xl font-semibold">Fontes de Renda</h2>
+              </div>
+              <AddIncomeSourceDialog onAdd={addIncomeSource} />
+            </div>
+            <IncomeSourcesList 
+              sources={incomeSources}
+              onRemove={removeIncomeSource}
+              onToggleActive={toggleIncomeSourceActive}
+            />
+          </motion.div>
         </div>
       </main>
     </div>

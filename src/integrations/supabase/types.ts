@@ -16,28 +16,82 @@ export type Database = {
     Tables: {
       bank_accounts: {
         Row: {
+          account_type: string
           balance: number
           color: string
           created_at: string
+          description: string | null
+          icon: string | null
           id: string
+          is_active: boolean
           name: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_type?: string
           balance?: number
           color?: string
           created_at?: string
+          description?: string | null
+          icon?: string | null
           id?: string
+          is_active?: boolean
           name: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          account_type?: string
           balance?: number
           color?: string
           created_at?: string
+          description?: string | null
+          icon?: string | null
           id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      income_sources: {
+        Row: {
+          amount: number
+          color: string | null
+          created_at: string
+          description: string | null
+          frequency: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
           name?: string
           updated_at?: string
           user_id?: string
