@@ -24,6 +24,7 @@ const Index = () => {
     primaryAccount,
     secondaryAccounts,
     incomeSources,
+    patrimonyHistory,
     summary,
     loading,
     addTransaction,
@@ -140,7 +141,7 @@ const Index = () => {
           <MonthlyChart receivables={receivables} payables={payables} />
           
           {/* Patrimony Evolution Chart */}
-          <PatrimonyChart currentBalance={summary.totalBalance} />
+          <PatrimonyChart currentBalance={summary.totalBalance} history={patrimonyHistory} />
         </div>
 
         {/* Transactions */}

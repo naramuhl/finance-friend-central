@@ -37,6 +37,13 @@ export interface IncomeSource {
   createdAt: Date;
 }
 
+export interface PatrimonySnapshot {
+  id: string;
+  totalBalance: number;
+  snapshotDate: Date;
+  createdAt: Date;
+}
+
 export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   primary: 'Principal',
   secondary: 'Secundária',
