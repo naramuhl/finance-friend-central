@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { Transaction, BankAccount, TransactionType, IncomeSource, AccountType, IncomeFrequency } from '@/types/finance';
+import { Transaction, BankAccount, TransactionType, IncomeSource, AccountType, IncomeFrequency, PatrimonySnapshot } from '@/types/finance';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +8,7 @@ export const useFinance = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [incomeSources, setIncomeSources] = useState<IncomeSource[]>([]);
+  const [patrimonyHistory, setPatrimonyHistory] = useState<PatrimonySnapshot[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -145,18 +146,82 @@ export const useFinance = () => {
     }
   }, [user, toast]);
 
+  // Fetch patrimony history from database
+  const fetchPatrimonyHistory = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('patrimony_history')
+        .select('*')
+        .order('snapshot_date', { ascending: true })
+        .limit(12);
+
+      if (error) throw error;
+
+      const mapped: PatrimonySnapshot[] = (data || []).map(p => ({
+        id: p.id,
+        totalBalance: Number(p.total_balance),
+        snapshotDate: new Date(p.snapshot_date),
+        createdAt: new Date(p.created_at),
+      }));
+
+      setPatrimonyHistory(mapped);
+    } catch (error) {
+      console.error('Error fetching patrimony history:', error);
+    }
+  }, [user]);
+
+  // Save current patrimony snapshot
+  const savePatrimonySnapshot = useCallback(async (balance: number) => {
+    if (!user) return;
+
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+      const { data, error } = await supabase
+        .from('patrimony_history')
+        .upsert(
+          {
+            user_id: user.id,
+            total_balance: balance,
+            snapshot_date: today,
+          },
+          { onConflict: 'user_id,snapshot_date' }
+        )
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newSnapshot: PatrimonySnapshot = {
+        id: data.id,
+        totalBalance: Number(data.total_balance),
+        snapshotDate: new Date(data.snapshot_date),
+        createdAt: new Date(data.created_at),
+      };
+
+      setPatrimonyHistory(prev => {
+        const filtered = prev.filter(p => p.snapshotDate.toISOString().split('T')[0] !== today);
+        return [...filtered, newSnapshot].sort((a, b) => a.snapshotDate.getTime() - b.snapshotDate.getTime());
+      });
+    } catch (error) {
+      console.error('Error saving patrimony snapshot:', error);
+    }
+  }, [user]);
+
   // Load data on mount
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([fetchTransactions(), fetchBankAccounts(), fetchIncomeSources()]);
+      await Promise.all([fetchTransactions(), fetchBankAccounts(), fetchIncomeSources(), fetchPatrimonyHistory()]);
       setLoading(false);
     };
 
     if (user) {
       loadData();
     }
-  }, [user, fetchTransactions, fetchBankAccounts, fetchIncomeSources]);
+  }, [user, fetchTransactions, fetchBankAccounts, fetchIncomeSources, fetchPatrimonyHistory]);
 
   // Get primary bank account
   const primaryAccount = useMemo(() => {
@@ -553,6 +618,13 @@ export const useFinance = () => {
     };
   }, [receivables, payables, totalBalance, monthlyIncome]);
 
+  // Auto-save patrimony snapshot when total balance changes
+  useEffect(() => {
+    if (!loading && totalBalance > 0 && user) {
+      savePatrimonySnapshot(totalBalance);
+    }
+  }, [totalBalance, loading, user, savePatrimonySnapshot]);
+
   return {
     transactions,
     receivables,
@@ -561,6 +633,7 @@ export const useFinance = () => {
     primaryAccount,
     secondaryAccounts,
     incomeSources,
+    patrimonyHistory,
     summary,
     loading,
     addTransaction,
@@ -572,5 +645,6 @@ export const useFinance = () => {
     addIncomeSource,
     removeIncomeSource,
     toggleIncomeSourceActive,
+    savePatrimonySnapshot,
   };
 };
