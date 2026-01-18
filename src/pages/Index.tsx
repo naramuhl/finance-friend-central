@@ -5,6 +5,7 @@ import { SummaryCard } from '@/components/SummaryCard';
 import { TransactionList } from '@/components/TransactionList';
 import { AddTransactionDialog } from '@/components/AddTransactionDialog';
 import { MonthlyChart } from '@/components/MonthlyChart';
+import { PatrimonyChart } from '@/components/PatrimonyChart';
 import { BankAccountCard } from '@/components/BankAccountCard';
 import { AccountsList } from '@/components/AccountsList';
 import { IncomeSourcesList } from '@/components/IncomeSourcesList';
@@ -133,59 +134,60 @@ const Index = () => {
           />
         </div>
 
-        {/* Chart and Transactions */}
-        <div className="mt-8 grid gap-6 lg:grid-cols-3">
-          {/* Chart */}
-          <div className="lg:col-span-1">
-            <MonthlyChart receivables={receivables} payables={payables} />
-          </div>
+        {/* Charts Row */}
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          {/* Monthly Summary Chart */}
+          <MonthlyChart receivables={receivables} payables={payables} />
+          
+          {/* Patrimony Evolution Chart */}
+          <PatrimonyChart currentBalance={summary.totalBalance} />
+        </div>
 
-          {/* Transactions */}
-          <div className="lg:col-span-2">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="rounded-2xl border bg-card p-6 shadow-card"
-            >
-              <Tabs defaultValue="payables" className="w-full">
-                <TabsList className="mb-6 grid w-full grid-cols-2 bg-muted">
-                  <TabsTrigger
-                    value="payables"
-                    className="data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground"
-                  >
-                    <ArrowDownRight className="mr-2 h-4 w-4" />
-                    Contas a Pagar ({payables.length})
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="receivables"
-                    className="data-[state=active]:bg-success data-[state=active]:text-success-foreground"
-                  >
-                    <ArrowUpRight className="mr-2 h-4 w-4" />
-                    Contas a Receber ({receivables.length})
-                  </TabsTrigger>
-                </TabsList>
+        {/* Transactions */}
+        <div className="mt-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="rounded-2xl border bg-card p-6 shadow-card"
+          >
+            <Tabs defaultValue="payables" className="w-full">
+              <TabsList className="mb-6 grid w-full grid-cols-2 bg-muted">
+                <TabsTrigger
+                  value="payables"
+                  className="data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground"
+                >
+                  <ArrowDownRight className="mr-2 h-4 w-4" />
+                  Contas a Pagar ({payables.length})
+                </TabsTrigger>
+                <TabsTrigger
+                  value="receivables"
+                  className="data-[state=active]:bg-success data-[state=active]:text-success-foreground"
+                >
+                  <ArrowUpRight className="mr-2 h-4 w-4" />
+                  Contas a Receber ({receivables.length})
+                </TabsTrigger>
+              </TabsList>
 
-                <TabsContent value="payables" className="mt-0">
-                  <TransactionList
-                    transactions={payables}
-                    onToggleStatus={toggleStatus}
-                    onRemove={removeTransaction}
-                    emptyMessage="Nenhuma conta a pagar"
-                  />
-                </TabsContent>
+              <TabsContent value="payables" className="mt-0">
+                <TransactionList
+                  transactions={payables}
+                  onToggleStatus={toggleStatus}
+                  onRemove={removeTransaction}
+                  emptyMessage="Nenhuma conta a pagar"
+                />
+              </TabsContent>
 
-                <TabsContent value="receivables" className="mt-0">
-                  <TransactionList
-                    transactions={receivables}
-                    onToggleStatus={toggleStatus}
-                    onRemove={removeTransaction}
-                    emptyMessage="Nenhuma conta a receber"
-                  />
-                </TabsContent>
-              </Tabs>
-            </motion.div>
-          </div>
+              <TabsContent value="receivables" className="mt-0">
+                <TransactionList
+                  transactions={receivables}
+                  onToggleStatus={toggleStatus}
+                  onRemove={removeTransaction}
+                  emptyMessage="Nenhuma conta a receber"
+                />
+              </TabsContent>
+            </Tabs>
+          </motion.div>
         </div>
 
         {/* Accounts and Income Sources Section */}
