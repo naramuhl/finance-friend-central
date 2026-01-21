@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { loginSchema } from '@/lib/validations';
 
 /**
  * Login Page
@@ -33,11 +34,24 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate with Zod schema
+    const result = loginSchema.safeParse({ email: email.trim(), password });
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast({
+        title: 'Erro de validação',
+        description: firstError.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       if (isSignUp) {
-        const { error } = await signUp(email, password);
+        const { error } = await signUp(result.data.email, result.data.password);
         if (error) {
           toast({
             title: "Erro no cadastro",
@@ -52,7 +66,7 @@ const Login = () => {
           setIsSignUp(false);
         }
       } else {
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(result.data.email, result.data.password);
         if (error) {
           toast({
             title: "Erro de autenticação",
