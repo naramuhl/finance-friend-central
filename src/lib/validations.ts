@@ -1,5 +1,18 @@
 import { z } from 'zod';
 
+// Login validation schema
+export const loginSchema = z.object({
+  email: z.string()
+    .min(1, 'Email é obrigatório')
+    .email('Email inválido')
+    .max(255, 'Email muito longo'),
+  password: z.string()
+    .min(6, 'Senha deve ter no mínimo 6 caracteres')
+    .max(128, 'Senha muito longa')
+});
+
+export type LoginInput = z.infer<typeof loginSchema>;
+
 // Transaction validation schema
 export const transactionSchema = z.object({
   description: z.string()
@@ -44,7 +57,30 @@ export const bankAccountSchema = z.object({
     .max(100, 'Nome muito longo'),
   balance: z.number()
     .max(999999999999.99, 'Saldo muito grande'),
-  color: z.string().min(1).max(50).default('blue')
+  color: z.string().min(1).max(50).default('blue'),
+  accountType: z.enum(['primary', 'secondary', 'savings', 'investment'], {
+    errorMap: () => ({ message: 'Tipo de conta inválido' })
+  }),
+  description: z.string().max(200, 'Descrição muito longa').optional(),
+  icon: z.string().min(1).max(50).default('wallet')
 });
 
 export type BankAccountInput = z.infer<typeof bankAccountSchema>;
+
+// Income source validation schema
+export const incomeSourceSchema = z.object({
+  name: z.string()
+    .min(1, 'Nome é obrigatório')
+    .max(100, 'Nome muito longo'),
+  amount: z.number()
+    .positive('Valor deve ser positivo')
+    .max(999999999.99, 'Valor muito grande'),
+  frequency: z.enum(['monthly', 'weekly', 'biweekly', 'yearly', 'one-time'], {
+    errorMap: () => ({ message: 'Frequência inválida' })
+  }),
+  color: z.string().min(1).max(50).default('green'),
+  icon: z.string().min(1).max(50).default('briefcase'),
+  description: z.string().max(200, 'Descrição muito longa').optional()
+});
+
+export type IncomeSourceInput = z.infer<typeof incomeSourceSchema>;

@@ -21,6 +21,7 @@ import {
 import { AccountType, ACCOUNT_TYPE_LABELS, ACCOUNT_COLORS, ACCOUNT_ICONS } from '@/types/finance';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { bankAccountSchema } from '@/lib/validations';
 
 interface AddAccountDialogProps {
   onAdd: (account: {
@@ -64,18 +65,10 @@ export const AddAccountDialog = ({ onAdd }: AddAccountDialogProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim()) {
-      toast({
-        title: 'Erro',
-        description: 'Nome da conta é obrigatório',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     const parsedBalance = parseFloat(balance) || 0;
 
-    onAdd({
+    // Validate with Zod schema
+    const result = bankAccountSchema.safeParse({
       name: name.trim(),
       balance: parsedBalance,
       color,
@@ -84,7 +77,24 @@ export const AddAccountDialog = ({ onAdd }: AddAccountDialogProps) => {
       icon,
     });
 
-    setName('');
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast({
+        title: 'Erro de validação',
+        description: firstError.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    onAdd({
+      name: result.data.name,
+      balance: result.data.balance,
+      color: result.data.color,
+      accountType: result.data.accountType,
+      description: result.data.description,
+      icon: result.data.icon,
+    });
     setBalance('');
     setColor('blue');
     setAccountType('secondary');

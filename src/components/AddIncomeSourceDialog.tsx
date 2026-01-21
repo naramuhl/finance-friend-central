@@ -21,6 +21,7 @@ import {
 import { IncomeFrequency, FREQUENCY_LABELS, ACCOUNT_COLORS } from '@/types/finance';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { incomeSourceSchema } from '@/lib/validations';
 
 interface AddIncomeSourceDialogProps {
   onAdd: (source: {
@@ -73,36 +74,36 @@ export const AddIncomeSourceDialog = ({ onAdd }: AddIncomeSourceDialogProps) => 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim()) {
-      toast({
-        title: 'Erro',
-        description: 'Nome da fonte de renda é obrigatório',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     const parsedAmount = parseFloat(amount) || 0;
 
-    if (parsedAmount <= 0) {
+    // Validate with Zod schema
+    const result = incomeSourceSchema.safeParse({
+      name: name.trim(),
+      amount: parsedAmount,
+      frequency,
+      color,
+      icon,
+      description: description.trim() || undefined,
+    });
+
+    if (!result.success) {
+      const firstError = result.error.errors[0];
       toast({
-        title: 'Erro',
-        description: 'Valor deve ser maior que zero',
+        title: 'Erro de validação',
+        description: firstError.message,
         variant: 'destructive',
       });
       return;
     }
 
     onAdd({
-      name: name.trim(),
-      description: description.trim() || undefined,
-      amount: parsedAmount,
-      frequency,
-      color,
-      icon,
+      name: result.data.name,
+      amount: result.data.amount,
+      frequency: result.data.frequency,
+      color: result.data.color,
+      icon: result.data.icon,
+      description: result.data.description,
     });
-
-    setName('');
     setAmount('');
     setFrequency('monthly');
     setColor('green');
