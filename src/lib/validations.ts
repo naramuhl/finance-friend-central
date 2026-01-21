@@ -84,3 +84,23 @@ export const incomeSourceSchema = z.object({
 });
 
 export type IncomeSourceInput = z.infer<typeof incomeSourceSchema>;
+
+// Financial goal validation schema
+export const financialGoalSchema = z.object({
+  name: z.string()
+    .min(1, 'Nome é obrigatório')
+    .max(100, 'Nome muito longo'),
+  targetAmount: z.number()
+    .positive('Valor alvo deve ser positivo')
+    .max(999999999.99, 'Valor muito grande'),
+  currentAmount: z.number()
+    .min(0, 'Valor atual não pode ser negativo')
+    .max(999999999.99, 'Valor muito grande')
+    .default(0),
+  deadline: z.date().optional(),
+  color: z.string().min(1).max(50).default('blue'),
+  icon: z.string().min(1).max(50).default('target'),
+  description: z.string().max(200, 'Descrição muito longa').optional()
+});
+
+export type FinancialGoalInput = z.infer<typeof financialGoalSchema>;

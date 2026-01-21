@@ -56,6 +56,51 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_goals: {
+        Row: {
+          color: string
+          created_at: string
+          current_amount: number
+          deadline: string | null
+          description: string | null
+          icon: string
+          id: string
+          is_completed: boolean
+          name: string
+          target_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          current_amount?: number
+          deadline?: string | null
+          description?: string | null
+          icon?: string
+          id?: string
+          is_completed?: boolean
+          name: string
+          target_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          current_amount?: number
+          deadline?: string | null
+          description?: string | null
+          icon?: string
+          id?: string
+          is_completed?: boolean
+          name?: string
+          target_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       income_sources: {
         Row: {
           amount: number
