@@ -44,6 +44,19 @@ export interface PatrimonySnapshot {
   createdAt: Date;
 }
 
+export interface FinancialGoal {
+  id: string;
+  name: string;
+  description?: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline?: Date;
+  color: string;
+  icon: string;
+  isCompleted: boolean;
+  createdAt: Date;
+}
+
 export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   primary: 'Principal',
   secondary: 'Secundária',
@@ -75,4 +88,15 @@ export const ACCOUNT_ICONS = [
   { name: 'Cartão', value: 'credit-card' },
   { name: 'Gráfico', value: 'trending-up' },
   { name: 'Moedas', value: 'coins' },
+];
+
+export const GOAL_ICONS = [
+  { name: 'Alvo', value: 'target' },
+  { name: 'Viagem', value: 'plane' },
+  { name: 'Casa', value: 'home' },
+  { name: 'Carro', value: 'car' },
+  { name: 'Formatura', value: 'graduation-cap' },
+  { name: 'Presente', value: 'gift' },
+  { name: 'Cofre', value: 'piggy-bank' },
+  { name: 'Estrela', value: 'star' },
 ];

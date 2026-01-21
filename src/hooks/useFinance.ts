@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { Transaction, BankAccount, TransactionType, IncomeSource, AccountType, IncomeFrequency, PatrimonySnapshot } from '@/types/finance';
+import { Transaction, BankAccount, TransactionType, IncomeSource, AccountType, IncomeFrequency, PatrimonySnapshot, FinancialGoal } from '@/types/finance';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -9,6 +9,7 @@ export const useFinance = () => {
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [incomeSources, setIncomeSources] = useState<IncomeSource[]>([]);
   const [patrimonyHistory, setPatrimonyHistory] = useState<PatrimonySnapshot[]>([]);
+  const [financialGoals, setFinancialGoals] = useState<FinancialGoal[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -210,18 +211,54 @@ export const useFinance = () => {
     }
   }, [user]);
 
+  // Fetch financial goals from database
+  const fetchFinancialGoals = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('financial_goals')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const mapped: FinancialGoal[] = (data || []).map(g => ({
+        id: g.id,
+        name: g.name,
+        description: g.description || undefined,
+        targetAmount: Number(g.target_amount),
+        currentAmount: Number(g.current_amount),
+        deadline: g.deadline ? new Date(g.deadline) : undefined,
+        color: g.color,
+        icon: g.icon,
+        isCompleted: g.is_completed,
+        createdAt: new Date(g.created_at),
+      }));
+
+      setFinancialGoals(mapped);
+    } catch (error) {
+      console.error('Error fetching financial goals:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar metas financeiras',
+        variant: 'destructive',
+      });
+    }
+  }, [user, toast]);
+
   // Load data on mount
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([fetchTransactions(), fetchBankAccounts(), fetchIncomeSources(), fetchPatrimonyHistory()]);
+      await Promise.all([fetchTransactions(), fetchBankAccounts(), fetchIncomeSources(), fetchPatrimonyHistory(), fetchFinancialGoals()]);
       setLoading(false);
     };
 
     if (user) {
       loadData();
     }
-  }, [user, fetchTransactions, fetchBankAccounts, fetchIncomeSources, fetchPatrimonyHistory]);
+  }, [user, fetchTransactions, fetchBankAccounts, fetchIncomeSources, fetchPatrimonyHistory, fetchFinancialGoals]);
 
   // Get primary bank account
   const primaryAccount = useMemo(() => {
@@ -557,6 +594,148 @@ export const useFinance = () => {
     }
   }, [incomeSources, toast]);
 
+  // Add financial goal
+  const addFinancialGoal = useCallback(async (goal: {
+    name: string;
+    description?: string;
+    targetAmount: number;
+    currentAmount: number;
+    deadline?: Date;
+    color: string;
+    icon: string;
+  }) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('financial_goals')
+        .insert({
+          user_id: user.id,
+          name: goal.name,
+          description: goal.description,
+          target_amount: goal.targetAmount,
+          current_amount: goal.currentAmount,
+          deadline: goal.deadline?.toISOString().split('T')[0],
+          color: goal.color,
+          icon: goal.icon,
+          is_completed: false,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newGoal: FinancialGoal = {
+        id: data.id,
+        name: data.name,
+        description: data.description || undefined,
+        targetAmount: Number(data.target_amount),
+        currentAmount: Number(data.current_amount),
+        deadline: data.deadline ? new Date(data.deadline) : undefined,
+        color: data.color,
+        icon: data.icon,
+        isCompleted: data.is_completed,
+        createdAt: new Date(data.created_at),
+      };
+
+      setFinancialGoals(prev => [...prev, newGoal]);
+    } catch (error) {
+      console.error('Error adding financial goal:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao adicionar meta',
+        variant: 'destructive',
+      });
+    }
+  }, [user, toast]);
+
+  // Update financial goal amount
+  const updateGoalAmount = useCallback(async (id: string, amountChange: number) => {
+    const goal = financialGoals.find(g => g.id === id);
+    if (!goal) return;
+
+    const newAmount = Math.max(0, goal.currentAmount + amountChange);
+
+    try {
+      const { error } = await supabase
+        .from('financial_goals')
+        .update({ current_amount: newAmount })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setFinancialGoals(prev =>
+        prev.map(g => g.id === id ? { ...g, currentAmount: newAmount } : g)
+      );
+
+      toast({
+        title: 'Valor atualizado',
+        description: amountChange > 0 ? 'Depósito realizado!' : 'Valor retirado.',
+      });
+    } catch (error) {
+      console.error('Error updating goal amount:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao atualizar valor',
+        variant: 'destructive',
+      });
+    }
+  }, [financialGoals, toast]);
+
+  // Mark goal as complete
+  const markGoalComplete = useCallback(async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('financial_goals')
+        .update({ is_completed: true })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setFinancialGoals(prev =>
+        prev.map(g => g.id === id ? { ...g, isCompleted: true } : g)
+      );
+
+      toast({
+        title: '🎉 Meta concluída!',
+        description: 'Parabéns por alcançar sua meta!',
+      });
+    } catch (error) {
+      console.error('Error marking goal complete:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao concluir meta',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
+
+  // Remove financial goal
+  const removeFinancialGoal = useCallback(async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('financial_goals')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setFinancialGoals(prev => prev.filter(g => g.id !== id));
+      
+      toast({
+        title: 'Meta removida',
+        description: 'A meta foi excluída.',
+      });
+    } catch (error) {
+      console.error('Error removing financial goal:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao remover meta',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
+
   const receivables = useMemo(
     () => transactions.filter(t => t.type === 'receivable'),
     [transactions]
@@ -634,6 +813,7 @@ export const useFinance = () => {
     secondaryAccounts,
     incomeSources,
     patrimonyHistory,
+    financialGoals,
     summary,
     loading,
     addTransaction,
@@ -646,5 +826,9 @@ export const useFinance = () => {
     removeIncomeSource,
     toggleIncomeSourceActive,
     savePatrimonySnapshot,
+    addFinancialGoal,
+    updateGoalAmount,
+    markGoalComplete,
+    removeFinancialGoal,
   };
 };

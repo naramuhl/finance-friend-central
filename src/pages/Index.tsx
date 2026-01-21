@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, LogOut, Wallet, Briefcase } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, LogOut, Wallet, Briefcase, Target } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SummaryCard } from '@/components/SummaryCard';
 import { TransactionList } from '@/components/TransactionList';
@@ -11,6 +11,8 @@ import { AccountsList } from '@/components/AccountsList';
 import { IncomeSourcesList } from '@/components/IncomeSourcesList';
 import { AddAccountDialog } from '@/components/AddAccountDialog';
 import { AddIncomeSourceDialog } from '@/components/AddIncomeSourceDialog';
+import { AddGoalDialog } from '@/components/AddGoalDialog';
+import { GoalsList } from '@/components/GoalsList';
 import { useFinance } from '@/hooks/useFinance';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -25,6 +27,7 @@ const Index = () => {
     secondaryAccounts,
     incomeSources,
     patrimonyHistory,
+    financialGoals,
     summary,
     loading,
     addTransaction,
@@ -36,6 +39,10 @@ const Index = () => {
     addIncomeSource,
     removeIncomeSource,
     toggleIncomeSourceActive,
+    addFinancialGoal,
+    updateGoalAmount,
+    markGoalComplete,
+    removeFinancialGoal,
   } = useFinance();
   const { user, signOut } = useAuth();
 
@@ -238,6 +245,35 @@ const Index = () => {
             />
           </motion.div>
         </div>
+
+        {/* Financial Goals Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="mt-8 rounded-2xl border bg-card p-6 shadow-card"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600">
+                <Target className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h2 className="font-display text-xl font-semibold">Metas Financeiras</h2>
+                <p className="text-sm text-muted-foreground">
+                  {financialGoals.filter(g => !g.isCompleted).length} meta(s) ativa(s)
+                </p>
+              </div>
+            </div>
+            <AddGoalDialog onAdd={addFinancialGoal} />
+          </div>
+          <GoalsList
+            goals={financialGoals}
+            onUpdateAmount={updateGoalAmount}
+            onMarkComplete={markGoalComplete}
+            onRemove={removeFinancialGoal}
+          />
+        </motion.div>
       </main>
     </div>
   );
