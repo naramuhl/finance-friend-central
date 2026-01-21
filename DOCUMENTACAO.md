@@ -5,24 +5,28 @@
 1. [Visão Geral](#visão-geral)
 2. [Estrutura do Projeto](#estrutura-do-projeto)
 3. [Autenticação](#autenticação)
-4. [Integração com MySQL](#integração-com-mysql)
-5. [Componentes](#componentes)
-6. [Hooks Personalizados](#hooks-personalizados)
-7. [Tipos de Dados](#tipos-de-dados)
-8. [Como Executar](#como-executar)
+4. [Banco de Dados (Lovable Cloud)](#banco-de-dados-lovable-cloud)
+5. [Validação de Dados](#validação-de-dados)
+6. [Componentes](#componentes)
+7. [Hooks Personalizados](#hooks-personalizados)
+8. [Tipos de Dados](#tipos-de-dados)
+9. [Segurança](#segurança)
+10. [Como Executar](#como-executar)
 
 ---
 
 ## Visão Geral
 
-Sistema de gestão de finanças pessoais desenvolvido em React com TypeScript.
+Sistema de gestão de finanças pessoais desenvolvido em React com TypeScript e Lovable Cloud como backend.
 
 **Funcionalidades:**
-- ✅ Gerenciamento de contas a pagar
-- ✅ Gerenciamento de contas a receber
-- ✅ Controle de saldo bancário
-- ✅ Relatórios visuais
-- ✅ Sistema de login
+- ✅ Gerenciamento de contas a pagar e receber
+- ✅ Múltiplas contas bancárias com ícones e cores personalizadas
+- ✅ Fontes de renda com frequências configuráveis
+- ✅ Histórico de patrimônio com gráfico de evolução
+- ✅ Relatórios visuais e gráficos interativos
+- ✅ Sistema de login seguro com Lovable Cloud
+- ✅ Validação de formulários com Zod
 
 **Tecnologias:**
 - React 18
@@ -31,6 +35,8 @@ Sistema de gestão de finanças pessoais desenvolvido em React com TypeScript.
 - Framer Motion (animações)
 - Recharts (gráficos)
 - React Router DOM (navegação)
+- Zod (validação de dados)
+- Lovable Cloud (backend e autenticação)
 
 ---
 
@@ -38,30 +44,48 @@ Sistema de gestão de finanças pessoais desenvolvido em React com TypeScript.
 
 ```
 src/
-├── components/           # Componentes reutilizáveis
-│   ├── ui/              # Componentes base (shadcn/ui)
-│   ├── AddTransactionDialog.tsx
-│   ├── BankAccountCard.tsx
-│   ├── MonthlyChart.tsx
-│   ├── ProtectedRoute.tsx
-│   ├── SummaryCard.tsx
-│   └── TransactionList.tsx
+├── components/                    # Componentes reutilizáveis
+│   ├── ui/                       # Componentes base (shadcn/ui)
+│   ├── AccountsList.tsx          # Lista de contas bancárias
+│   ├── AddAccountDialog.tsx      # Modal para nova conta
+│   ├── AddIncomeSourceDialog.tsx # Modal para nova fonte de renda
+│   ├── AddTransactionDialog.tsx  # Modal para nova transação
+│   ├── BankAccountCard.tsx       # Card de conta bancária
+│   ├── IncomeSourcesList.tsx     # Lista de fontes de renda
+│   ├── MonthlyChart.tsx          # Gráfico mensal
+│   ├── NavLink.tsx               # Link de navegação
+│   ├── PatrimonyChart.tsx        # Gráfico de evolução patrimonial
+│   ├── ProtectedRoute.tsx        # Proteção de rotas
+│   ├── SummaryCard.tsx           # Card de resumo
+│   └── TransactionList.tsx       # Lista de transações
 │
-├── hooks/               # Hooks personalizados
-│   ├── useAuth.ts       # Gerenciamento de autenticação
-│   ├── useFinance.ts    # Lógica financeira
-│   └── use-toast.ts     # Notificações
+├── contexts/                     # Contextos React
+│   └── AuthContext.tsx           # Contexto de autenticação
 │
-├── pages/               # Páginas da aplicação
-│   ├── Index.tsx        # Dashboard principal
-│   ├── Login.tsx        # Tela de login
-│   └── NotFound.tsx     # Página 404
+├── hooks/                        # Hooks personalizados
+│   ├── useFinance.ts             # Lógica financeira principal
+│   ├── use-mobile.tsx            # Detecção de dispositivo
+│   └── use-toast.ts              # Notificações
 │
-├── types/               # Definições de tipos
-│   └── finance.ts       # Tipos financeiros
+├── integrations/                 # Integrações externas
+│   └── supabase/
+│       ├── client.ts             # Cliente Supabase (auto-gerado)
+│       └── types.ts              # Tipos do banco (auto-gerado)
 │
-├── App.tsx              # Componente raiz e rotas
-└── main.tsx             # Ponto de entrada
+├── lib/                          # Utilitários
+│   ├── utils.ts                  # Funções auxiliares
+│   └── validations.ts            # Schemas de validação Zod
+│
+├── pages/                        # Páginas da aplicação
+│   ├── Index.tsx                 # Dashboard principal
+│   ├── Login.tsx                 # Tela de login/cadastro
+│   └── NotFound.tsx              # Página 404
+│
+├── types/                        # Definições de tipos
+│   └── finance.ts                # Tipos financeiros
+│
+├── App.tsx                       # Componente raiz e rotas
+└── main.tsx                      # Ponto de entrada
 ```
 
 ---
@@ -70,23 +94,27 @@ src/
 
 ### Autenticação Segura com Lovable Cloud
 
-Este sistema utiliza autenticação segura via Lovable Cloud. As credenciais são validadas no servidor, não no cliente.
+O sistema utiliza autenticação segura via Lovable Cloud com validação de email e senha.
 
 ### Fluxo de Autenticação
 
 1. Usuário acessa `/login`
 2. Pode criar conta ou fazer login
-3. Sistema valida credenciais no servidor
-4. Se válido: cria sessão segura e redireciona para `/`
-5. Se inválido: exibe mensagem de erro
+3. Formulário é validado com schema Zod
+4. Sistema valida credenciais no servidor
+5. Se válido: cria sessão segura e redireciona para `/`
+6. Se inválido: exibe mensagem de erro
 
 ### Componentes de Autenticação
 
 #### `Login.tsx`
-Página de login/cadastro com formulário de autenticação.
+Página de login/cadastro com validação Zod.
 
 ```tsx
 import Login from './pages/Login';
+
+// Usa loginSchema para validar email e senha
+import { loginSchema } from '@/lib/validations';
 ```
 
 #### `ProtectedRoute.tsx`
@@ -111,221 +139,126 @@ const { user, session, loading, signIn, signUp, signOut } = useAuth();
 
 ---
 
-## Integração com MySQL
+## Banco de Dados (Lovable Cloud)
 
-### Passo 1: Criar Banco de Dados
+### Tabelas
 
-Execute no MySQL:
+#### `transactions`
+Armazena transações financeiras.
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | ID único |
+| user_id | UUID | ID do usuário |
+| description | TEXT | Descrição da transação |
+| amount | DECIMAL | Valor |
+| due_date | DATE | Data de vencimento |
+| type | TEXT | 'receivable' ou 'payable' |
+| status | TEXT | 'pending' ou 'paid' |
+| category | TEXT | Categoria |
 
-```sql
--- Criar banco de dados
-CREATE DATABASE IF NOT EXISTS financas_db;
-USE financas_db;
+#### `bank_accounts`
+Armazena contas bancárias.
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | ID único |
+| user_id | UUID | ID do usuário |
+| name | TEXT | Nome da conta |
+| balance | DECIMAL | Saldo atual |
+| color | TEXT | Cor do card |
+| account_type | TEXT | Tipo da conta |
+| icon | TEXT | Ícone |
+| description | TEXT | Descrição opcional |
+| is_active | BOOLEAN | Se está ativa |
 
--- Tabela de usuários
-CREATE TABLE usuarios (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  nome VARCHAR(100) NOT NULL,
-  email VARCHAR(100) UNIQUE NOT NULL,
-  senha VARCHAR(255) NOT NULL,
-  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+#### `income_sources`
+Armazena fontes de renda.
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | ID único |
+| user_id | UUID | ID do usuário |
+| name | TEXT | Nome da fonte |
+| amount | DECIMAL | Valor |
+| frequency | TEXT | Frequência |
+| color | TEXT | Cor |
+| icon | TEXT | Ícone |
+| description | TEXT | Descrição opcional |
+| is_active | BOOLEAN | Se está ativa |
 
--- Tabela de transações
-CREATE TABLE transacoes (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  usuario_id INT NOT NULL,
-  tipo ENUM('receita', 'despesa') NOT NULL,
-  descricao VARCHAR(255) NOT NULL,
-  valor DECIMAL(10, 2) NOT NULL,
-  data_vencimento DATE NOT NULL,
-  status ENUM('pendente', 'concluido') DEFAULT 'pendente',
-  categoria VARCHAR(50),
-  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-);
+#### `patrimony_history`
+Armazena histórico de patrimônio para gráfico de evolução.
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | ID único |
+| user_id | UUID | ID do usuário |
+| total_balance | DECIMAL | Saldo total |
+| snapshot_date | DATE | Data do snapshot |
 
--- Tabela de conta bancária
-CREATE TABLE contas_bancarias (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  usuario_id INT NOT NULL,
-  nome VARCHAR(100) NOT NULL,
-  saldo DECIMAL(10, 2) DEFAULT 0,
-  atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-);
+### Políticas RLS (Row Level Security)
 
--- Inserir usuário de teste (senha: 123456 com hash bcrypt)
-INSERT INTO usuarios (nome, email, senha) VALUES 
-('Administrador', 'admin@teste.com', '$2a$10$exemplo_hash_bcrypt');
-```
+Todas as tabelas possuem políticas RLS que garantem:
+- Usuários só podem ver seus próprios dados
+- Usuários só podem inserir dados com seu próprio `user_id`
+- Usuários só podem atualizar/deletar seus próprios dados
 
-### Passo 2: Criar API Backend (Node.js + Express)
+---
 
-Crie um novo projeto Node.js:
+## Validação de Dados
 
-```bash
-mkdir api-financas
-cd api-financas
-npm init -y
-npm install express mysql2 cors bcryptjs jsonwebtoken dotenv
-```
+### Schemas Zod
 
-Crie o arquivo `server.js`:
+O sistema utiliza Zod para validação de formulários, garantindo dados consistentes e seguros.
 
-```javascript
-const express = require('express');
-const mysql = require('mysql2/promise');
-const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-require('dotenv').config();
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-// Configuração do banco
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'financas_db',
-  waitForConnections: true,
-  connectionLimit: 10,
-});
-
-// Rota de Login
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, senha } = req.body;
-    
-    const [usuarios] = await pool.execute(
-      'SELECT * FROM usuarios WHERE email = ?',
-      [email]
-    );
-    
-    if (usuarios.length === 0) {
-      return res.status(401).json({ erro: 'Credenciais inválidas' });
-    }
-    
-    const usuario = usuarios[0];
-    const senhaValida = await bcrypt.compare(senha, usuario.senha);
-    
-    if (!senhaValida) {
-      return res.status(401).json({ erro: 'Credenciais inválidas' });
-    }
-    
-    const token = jwt.sign(
-      { id: usuario.id, email: usuario.email },
-      process.env.JWT_SECRET || 'chave_secreta',
-      { expiresIn: '24h' }
-    );
-    
-    res.json({
-      token,
-      usuario: {
-        id: usuario.id,
-        nome: usuario.nome,
-        email: usuario.email,
-      }
-    });
-  } catch (erro) {
-    console.error('Erro no login:', erro);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
-  }
-});
-
-// Middleware de autenticação
-const autenticar = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  
-  if (!token) {
-    return res.status(401).json({ erro: 'Token não fornecido' });
-  }
-  
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'chave_secreta');
-    req.usuario = decoded;
-    next();
-  } catch {
-    return res.status(401).json({ erro: 'Token inválido' });
-  }
-};
-
-// Rotas de Transações (protegidas)
-app.get('/api/transacoes', autenticar, async (req, res) => {
-  try {
-    const [transacoes] = await pool.execute(
-      'SELECT * FROM transacoes WHERE usuario_id = ? ORDER BY data_vencimento',
-      [req.usuario.id]
-    );
-    res.json(transacoes);
-  } catch (erro) {
-    res.status(500).json({ erro: 'Erro ao buscar transações' });
-  }
-});
-
-app.post('/api/transacoes', autenticar, async (req, res) => {
-  try {
-    const { tipo, descricao, valor, data_vencimento, categoria } = req.body;
-    
-    const [resultado] = await pool.execute(
-      'INSERT INTO transacoes (usuario_id, tipo, descricao, valor, data_vencimento, categoria) VALUES (?, ?, ?, ?, ?, ?)',
-      [req.usuario.id, tipo, descricao, valor, data_vencimento, categoria]
-    );
-    
-    res.status(201).json({ id: resultado.insertId, ...req.body });
-  } catch (erro) {
-    res.status(500).json({ erro: 'Erro ao criar transação' });
-  }
-});
-
-// Iniciar servidor
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
-```
-
-Crie o arquivo `.env`:
-
-```env
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=sua_senha
-DB_NAME=financas_db
-JWT_SECRET=sua_chave_secreta_muito_segura
-PORT=3001
-```
-
-### Passo 3: Conectar o Frontend à API
-
-Atualize o hook `useAuth.ts` para usar a API:
+#### `loginSchema`
+Valida credenciais de login.
 
 ```typescript
-const login = async (email: string, senha: string): Promise<boolean> => {
-  try {
-    const response = await fetch('http://localhost:3001/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, senha })
-    });
-    
-    if (!response.ok) return false;
-    
-    const { token, usuario } = await response.json();
-    localStorage.setItem('token', token);
-    localStorage.setItem('usuario', JSON.stringify({ ...usuario, logado: true }));
-    setUsuario({ ...usuario, logado: true });
-    
-    return true;
-  } catch (erro) {
-    console.error('Erro no login:', erro);
-    return false;
-  }
-};
+import { loginSchema } from '@/lib/validations';
+
+const result = loginSchema.safeParse({ email, password });
+if (!result.success) {
+  // Exibir erro
+}
+```
+
+#### `transactionSchema`
+Valida transações financeiras.
+
+```typescript
+import { transactionSchema } from '@/lib/validations';
+
+// Validações:
+// - description: 1-200 caracteres
+// - amount: positivo, máximo 2 casas decimais
+// - dueDate: entre 2000 e 5 anos no futuro
+// - type: 'receivable' ou 'payable'
+// - status: 'pending' ou 'paid'
+// - category: lista predefinida
+```
+
+#### `bankAccountSchema`
+Valida contas bancárias.
+
+```typescript
+import { bankAccountSchema } from '@/lib/validations';
+
+// Validações:
+// - name: 1-100 caracteres
+// - balance: máximo 999999999999.99
+// - color, icon: strings válidas
+// - accountType: 'primary', 'secondary', 'savings', 'investment'
+```
+
+#### `incomeSourceSchema`
+Valida fontes de renda.
+
+```typescript
+import { incomeSourceSchema } from '@/lib/validations';
+
+// Validações:
+// - name: 1-100 caracteres
+// - amount: positivo, máximo 999999999.99
+// - frequency: 'monthly', 'weekly', 'biweekly', 'yearly', 'one-time'
+// - color, icon: strings válidas
 ```
 
 ---
@@ -356,12 +289,36 @@ Lista de transações com opções de gerenciamento.
 | emptyMessage | string | Mensagem quando vazio |
 
 ### AddTransactionDialog
-Modal para adicionar nova transação.
+Modal para adicionar nova transação com validação Zod.
 
 **Props:**
 | Prop | Tipo | Descrição |
 |------|------|-----------|
-| onAdd | (transaction: Omit<Transaction, 'id'>) => void | Callback ao salvar |
+| onAdd | (transaction: TransactionInput) => void | Callback ao salvar |
+
+### AddAccountDialog
+Modal para adicionar nova conta bancária com validação Zod.
+
+**Props:**
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| onAdd | (account: BankAccountInput) => void | Callback ao salvar |
+
+### AddIncomeSourceDialog
+Modal para adicionar nova fonte de renda com validação Zod.
+
+**Props:**
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| onAdd | (source: IncomeSourceInput) => void | Callback ao salvar |
+
+### PatrimonyChart
+Gráfico de evolução do patrimônio ao longo do tempo.
+
+**Props:**
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| history | PatrimonySnapshot[] | Histórico de snapshots |
 
 ### BankAccountCard
 Card de saldo da conta bancária.
@@ -387,18 +344,33 @@ Gráfico de barras com resumo mensal.
 ## Hooks Personalizados
 
 ### useFinance
-Gerencia toda a lógica de finanças.
+Gerencia toda a lógica de finanças, incluindo CRUD de transações, contas e fontes de renda.
 
 ```typescript
 const {
-  receivables,      // Lista de contas a receber
-  payables,         // Lista de contas a pagar
-  bankAccount,      // Dados da conta bancária
-  summary,          // Resumo financeiro
-  addTransaction,   // Adicionar transação
-  removeTransaction,// Remover transação
-  toggleStatus,     // Dar baixa/desfazer
-  updateBankBalance // Atualizar saldo
+  // Transações
+  receivables,          // Lista de contas a receber
+  payables,             // Lista de contas a pagar
+  addTransaction,       // Adicionar transação
+  removeTransaction,    // Remover transação
+  toggleStatus,         // Dar baixa/desfazer
+  
+  // Contas bancárias
+  bankAccounts,         // Lista de contas
+  addBankAccount,       // Adicionar conta
+  updateAccountBalance, // Atualizar saldo
+  
+  // Fontes de renda
+  incomeSources,        // Lista de fontes
+  addIncomeSource,      // Adicionar fonte
+  
+  // Patrimônio
+  patrimonyHistory,     // Histórico de patrimônio
+  savePatrimonySnapshot,// Salvar snapshot atual
+  
+  // Resumo
+  summary,              // Resumo financeiro
+  loading,              // Estado de carregamento
 } = useFinance();
 ```
 
@@ -407,12 +379,12 @@ Gerencia autenticação do usuário.
 
 ```typescript
 const {
-  usuario,              // Dados do usuário logado
-  carregando,           // Estado de carregamento
-  autenticado,          // Se está logado
-  login,                // Função de login
-  logout,               // Função de logout
-  verificarAutenticacao // Verifica sessão
+  user,       // Dados do usuário logado
+  session,    // Sessão atual
+  loading,    // Estado de carregamento
+  signIn,     // Função de login
+  signUp,     // Função de cadastro
+  signOut,    // Função de logout
 } = useAuth();
 ```
 
@@ -424,12 +396,13 @@ const {
 ```typescript
 interface Transaction {
   id: string;
-  type: 'income' | 'expense';
   description: string;
   amount: number;
   dueDate: Date;
-  status: 'pending' | 'completed';
-  category?: string;
+  type: 'receivable' | 'payable';
+  status: 'pending' | 'paid';
+  category: string;
+  createdAt: Date;
 }
 ```
 
@@ -439,27 +412,79 @@ interface BankAccount {
   id: string;
   name: string;
   balance: number;
-  lastUpdate: Date;
+  color: string;
+  accountType: 'primary' | 'secondary' | 'savings' | 'investment';
+  description?: string;
+  icon: string;
+  isActive: boolean;
 }
 ```
 
-### FinanceSummary
+### IncomeSource
 ```typescript
-interface FinanceSummary {
-  totalReceivables: number;
-  totalPayables: number;
-  pendingReceivables: number;
-  pendingPayables: number;
-  balance: number;
-  projectedBalance: number;
+interface IncomeSource {
+  id: string;
+  name: string;
+  description?: string;
+  amount: number;
+  frequency: 'monthly' | 'weekly' | 'biweekly' | 'yearly' | 'one-time';
+  isActive: boolean;
+  color: string;
+  icon: string;
+  createdAt: Date;
 }
+```
+
+### PatrimonySnapshot
+```typescript
+interface PatrimonySnapshot {
+  id: string;
+  totalBalance: number;
+  snapshotDate: Date;
+  createdAt: Date;
+}
+```
+
+---
+
+## Segurança
+
+### Medidas Implementadas
+
+1. **Row Level Security (RLS)**
+   - Todas as tabelas possuem políticas RLS
+   - Usuários só acessam seus próprios dados
+
+2. **Validação com Zod**
+   - Todos os formulários são validados
+   - Limites de caracteres e valores
+   - Sanitização de inputs
+
+3. **Autenticação Segura**
+   - Senhas com mínimo 6 caracteres
+   - Sessões gerenciadas pelo Lovable Cloud
+
+4. **Rotas Protegidas**
+   - `ProtectedRoute` impede acesso não autenticado
+   - Redirecionamento automático para login
+
+### Schemas de Validação
+
+```typescript
+// Todos os schemas estão em src/lib/validations.ts
+import { 
+  loginSchema,
+  transactionSchema,
+  bankAccountSchema,
+  incomeSourceSchema 
+} from '@/lib/validations';
 ```
 
 ---
 
 ## Como Executar
 
-### Frontend (React)
+### Desenvolvimento Local
 
 ```bash
 # Instalar dependências
@@ -470,59 +495,40 @@ npm run dev
 
 # Build para produção
 npm run build
+
+# Executar testes
+npm run test
 ```
 
-### Backend (se configurado)
+### Variáveis de Ambiente
 
-```bash
-# Navegar para pasta da API
-cd api-financas
-
-# Instalar dependências
-npm install
-
-# Executar servidor
-node server.js
-```
-
----
-
-## Variáveis de Ambiente
-
-### Frontend (.env)
-```env
-VITE_API_URL=http://localhost:3001
-```
-
-### Backend (.env)
-```env
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=sua_senha
-DB_NAME=financas_db
-JWT_SECRET=sua_chave_secreta
-PORT=3001
-```
+O arquivo `.env` é gerado automaticamente pelo Lovable Cloud com:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `VITE_SUPABASE_PROJECT_ID`
 
 ---
 
 ## Próximos Passos Sugeridos
 
-1. **Lovable Cloud** - Para ter banco de dados integrado sem configurar servidor separado
-2. **Categorias personalizadas** - Permitir criar categorias de gastos
-3. **Relatórios avançados** - Gráficos por período e categoria
-4. **Exportar dados** - Gerar relatórios em PDF/Excel
-5. **Múltiplas contas** - Gerenciar várias contas bancárias
-6. **Transações recorrentes** - Criar despesas/receitas automáticas
+1. ✅ **Múltiplas contas bancárias** - Implementado
+2. ✅ **Fontes de renda** - Implementado
+3. ✅ **Histórico de patrimônio** - Implementado
+4. ✅ **Validação com Zod** - Implementado
+5. **Metas financeiras** - Acompanhar objetivos de economia
+6. **Relatório por categoria** - Gráfico de pizza com gastos
+7. **Exportar dados** - PDF/Excel com relatórios
+8. **Transações recorrentes** - Despesas/receitas automáticas
+9. **Notificações** - Alertas de vencimento
 
 ---
 
 ## Suporte
 
-Para dúvidas ou problemas, verifique:
+Para dúvidas ou problemas:
 1. Console do navegador (F12) para erros JavaScript
-2. Terminal do servidor para erros de API
-3. Logs do MySQL para erros de banco
+2. Verifique as políticas RLS no banco de dados
+3. Confirme que o usuário está autenticado
 
 ---
 
