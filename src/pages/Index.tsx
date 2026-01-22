@@ -6,6 +6,7 @@ import { TransactionList } from '@/components/TransactionList';
 import { AddTransactionDialog } from '@/components/AddTransactionDialog';
 import { MonthlyChart } from '@/components/MonthlyChart';
 import { PatrimonyChart } from '@/components/PatrimonyChart';
+import { ExpensesByCategoryChart } from '@/components/ExpensesByCategoryChart';
 import { BankAccountCard } from '@/components/BankAccountCard';
 import { AccountsList } from '@/components/AccountsList';
 import { IncomeSourcesList } from '@/components/IncomeSourcesList';
@@ -153,6 +154,11 @@ const Index = () => {
           
           {/* Patrimony Evolution Chart */}
           <PatrimonyChart currentBalance={summary.totalBalance} history={patrimonyHistory} />
+        </div>
+
+        {/* Expenses by Category Chart */}
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <ExpensesByCategoryChart transactions={payables} />
         </div>
 
         {/* Transactions */}
