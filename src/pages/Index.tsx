@@ -14,6 +14,7 @@ import { AddIncomeSourceDialog } from '@/components/AddIncomeSourceDialog';
 import { AddGoalDialog } from '@/components/AddGoalDialog';
 import { GoalsList } from '@/components/GoalsList';
 import { useFinance } from '@/hooks/useFinance';
+import { useGoalNotifications } from '@/hooks/useGoalNotifications';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -45,6 +46,9 @@ const Index = () => {
     removeFinancialGoal,
   } = useFinance();
   const { user, signOut } = useAuth();
+
+  // Notificações para metas com prazo próximo
+  useGoalNotifications({ goals: financialGoals, enabled: !loading });
 
   const currentMonth = format(new Date(), "MMMM 'de' yyyy", { locale: ptBR });
 
